@@ -1,6 +1,7 @@
 #include "Mode.hpp"
 
 #include "Scene.hpp"
+#include "Sound.hpp"
 #include "WalkMesh.hpp"
 
 #include <glm/glm.hpp>
@@ -27,6 +28,12 @@ struct PlayMode : Mode {
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
+
+	Scene::Transform *bomb;
+	float detect_dist = 1.f;
+	float sound_dist = 5.f;
+
+	Sound::PlayingSample *bomb_sound;
 
 	//player info:
 	struct Player {

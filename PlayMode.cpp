@@ -44,8 +44,22 @@ Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const
 	return ret;
 });
 
+Load< Sound::Sample > robin_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("robin.wav"));
+});
+
 PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//create a player transform:
+	for (auto& transform : scene.transforms)
+	{
+		if (transform.name == "Bomb")
+		{
+			bomb = &transform;
+			std::cout <<"bomb: " << bomb->position.x << " " << bomb->position.y << " " << bomb->position.z << "\n";
+
+		}
+	}
+	
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
 
@@ -65,10 +79,28 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	std::cout << "player at: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
 
+	bomb_sound = Sound::loop(*robin_sample, 0.0, 0.0).get();
 }
 
 PlayMode::~PlayMode() {
+}
+
+float bomb_volume(Scene::Transform *b, Scene::Transform *p, float min_dist, float max_dist){
+	float xd = b->position.x - p->position.x, yd = b->position.y - p->position.y, zd = b->position.z - p->position.z;
+	float dist = std::sqrt(xd*xd + yd*yd + zd*zd);
+	std::cout << dist << "\n";
+	if (dist > max_dist)
+	{
+		return 0.f;
+	}
+	if (dist < min_dist)
+	{
+		return 1.f;
+	}
+
+	return 1.f - dist / max_dist;	
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
@@ -212,6 +244,11 @@ void PlayMode::update(float elapsed) {
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
 
+		std::cout << "player position: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
+		auto x = player.transform->position.x - bomb->position.x, y = player.transform->position.y - bomb->position.y, z = player.transform->position.z - bomb->position.z;
+		std::cout << "cur x, y, z: " << x << " " << y << " " << z << "\n";
+		std::cout << "cur distance: " << std::sqrt(x*x + y*y + z*z) << "\n";
+		bomb_sound->set_volume(bomb_volume(bomb, player.transform, detect_dist, sound_dist));
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
 		glm::vec3 right = frame[0];

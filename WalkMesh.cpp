@@ -183,7 +183,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		end.indices.x = indy;
 		end.indices.y = indz;
 		end.indices.z = indx;
-		std::cout << "x = 0\n" ;
+		// std::cout << "x = 0\n" ;
 	} else if (zero_index == 1) { // z, x, y
 		end.weights.y = end.weights.x;
 		end.weights.x = end.weights.z;
@@ -191,19 +191,19 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		end.indices.x = indz;
 		end.indices.y = indx;
 		end.indices.z = indy;
-		std::cout << "y = 0\n" ;
+		// std::cout << "y = 0\n" ;
 
 	} else if (zero_index == 2) {
 		end.weights.z = 0.0;
-		std::cout << "z = 0\n" ;
+		// std::cout << "z = 0\n" ;
 
 	}
-	if (end.weights.x != start.weights.x)
-	{
-		std::cout << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
-		std::cout << "v: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
-		std::cout << "walk in ended\n" ; 
-	}
+	// if (end.weights.x != start.weights.x)
+	// {
+	// 	std::cout << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
+	// 	std::cout << "v: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
+	// 	std::cout << "walk in ended\n" ; 
+	// }
 	
 }
 
@@ -235,9 +235,9 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		end.weights.z = 0.f;
 		end.indices = glm::uvec3(start.indices.y, start.indices.x, v_it->second);
 
-		std::cout << "after cross edge weight: " << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
-		std::cout << "after cross edge indices: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
-		std::cout << "before cross edge indices: " << start.indices.x << " " << start.indices.y << " " << start.indices.z << "\n";
+		// std::cout << "after cross edge weight: " << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
+		// std::cout << "after cross edge indices: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
+		// std::cout << "before cross edge indices: " << start.indices.x << " " << start.indices.y << " " << start.indices.z << "\n";
 
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:
 		//TODO?
