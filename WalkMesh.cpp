@@ -44,16 +44,20 @@ WalkMesh::WalkMesh(std::vector< glm::vec3 > const &vertices_, std::vector< glm::
 glm::vec3 barycentric_weights(glm::vec3 const &a, glm::vec3 const &b, glm::vec3 const &c, glm::vec3 const &pt) {
 	glm::vec3 v0 = b - a, v1 = c - a, v2 = pt - a;
 	
-	double d00 = glm::dot(v0, v0);
-	double d01 = glm::dot(v0, v1);
-	double d11 = glm::dot(v1, v1);
-	double d20 = glm::dot(v2, v0);
-	double d21 = glm::dot(v2, v1);
-	double denom = d00 * d11 - d01 * d01;
-	double v = (d11 * d20 - d01 * d21) / denom;
-	double w = (d00 * d21 - d01 * d20) / denom;
-	double u = 1.0 - v - w;
+	float d00 = glm::dot(v0, v0);
+	float d01 = glm::dot(v0, v1);
+	float d11 = glm::dot(v1, v1);
+	float d20 = glm::dot(v2, v0);
+	float d21 = glm::dot(v2, v1);
+	float denom = d00 * d11 - d01 * d01;
+	float v = (d11 * d20 - d01 * d21) / denom;
+	float w = (d00 * d21 - d01 * d20) / denom;
+	float u = 1.0 - v - w;
 	
+	// v = ((c.y - pt.y) * (a.x - c.x) - (c.x - pt.x)  * (a.y - c.y)) / ((b.x - c.x) * (a.y - c.y) - (b.y - c.y) * (a.x - c.x));
+	// u = (v * (b.x - c.x) + c.x - pt.x )/ (c.x - a.x);
+	// w = 1 - u - v;
+
 	return glm::vec3(u, v, w);
 }
 
@@ -143,7 +147,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	
 	//if no edge is crossed, event will just be taking the whole step:
 	time = 1.0f;
-	end = start;
+	end = start; // ?todo
 
 	glm::vec3 barycentric_v = step_coords - start.weights;
 	int zero_index = -1;
@@ -171,7 +175,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 
 	//Remember: our convention is that when a WalkPoint is on an edge,
 	// then wp.weights.z == 0.0f (so will likely need to re-order the indices)
-	int indx = end.indices.x, indy = end.indices.y, indz = end.indices.z;
+	int indx = end.indices.x, indy = end.indices.y, indz = end.indices.z; //?todo sum 1?
 	if (zero_index == 0) { // y, z, x
 		end.weights.x = end.weights.y;
 		end.weights.y = end.weights.z;
@@ -179,6 +183,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		end.indices.x = indy;
 		end.indices.y = indz;
 		end.indices.z = indx;
+		std::cout << "x = 0\n" ;
 	} else if (zero_index == 1) { // z, x, y
 		end.weights.y = end.weights.x;
 		end.weights.x = end.weights.z;
@@ -186,9 +191,20 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		end.indices.x = indz;
 		end.indices.y = indx;
 		end.indices.z = indy;
+		std::cout << "y = 0\n" ;
+
 	} else if (zero_index == 2) {
 		end.weights.z = 0.0;
+		std::cout << "z = 0\n" ;
+
 	}
+	if (end.weights.x != start.weights.x)
+	{
+		std::cout << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
+		std::cout << "v: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
+		std::cout << "walk in ended\n" ; 
+	}
+	
 }
 
 bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_) const {
@@ -216,12 +232,18 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		//TODO
 		glm::vec3 pt = start.weights.x * sa + start.weights.y * sb + start.weights.z * sc;
 		end.weights = barycentric_weights(a, b, c, pt);
+		end.weights.z = 0.f;
+		end.indices = glm::uvec3(start.indices.y, start.indices.x, v_it->second);
+
+		std::cout << "after cross edge weight: " << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
+		std::cout << "after cross edge indices: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
+		std::cout << "before cross edge indices: " << start.indices.x << " " << start.indices.y << " " << start.indices.z << "\n";
 
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:
-		//TODO
+		//TODO?
 		rotation = glm::rotation(
-			//glm::normalize(glm::cross(sb-sa, sc-sa)), 
-			//glm::normalize(glm::cross(b-a, c-a))
+			// glm::normalize(glm::cross(sb-sa, sc-sa)), 
+			// glm::normalize(glm::cross(b-a, c-a))
 			glm::cross(WalkMesh::normals[start.indices.y] - WalkMesh::normals[start.indices.x], WalkMesh::normals[start.indices.z] - WalkMesh::normals[start.indices.x]),
 			glm::cross(WalkMesh::normals[start.indices.x] - WalkMesh::normals[start.indices.y], WalkMesh::normals[v_it->second] - WalkMesh::normals[start.indices.y])
 		);
