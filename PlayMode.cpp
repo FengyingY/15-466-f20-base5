@@ -44,8 +44,8 @@ Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const
 	return ret;
 });
 
-Load< Sound::Sample > robin_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("robin.wav"));
+Load< Sound::Sample > background_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("Loop003-jungle.wav"));
 });
 
 std::string get_ingredients_entry(std::string ing, bool find){
@@ -93,7 +93,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	std::cout << "player at: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
 	
-	// bomb_sound = Sound::loop(*robin_sample, 0.0, 0.0).get();
+	Sound::loop(*background_sample, 1.0, 0.0);
 }
 
 PlayMode::~PlayMode() {

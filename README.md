@@ -16,3 +16,4 @@ Sources: (TODO: list a source URL for any assets you did not create yourself. Ma
 
 This game was built with [NEST](NEST.md).
 
+- Loop003-jungle.wav by bebeto(https://freesound.org/people/bebeto/) from https://freesound.org/people/bebeto/sounds/18973/
