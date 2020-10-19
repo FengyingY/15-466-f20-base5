@@ -18,20 +18,26 @@ struct PlayMode : Mode {
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
+	void restart();
 	//----- game state -----
 
 	//input tracking:
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up;
+	} left, right, down, up, dig;
+
+	float wait = -1.f;
+	float wait_limit = 2.f;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
 	Scene::Transform *bomb;
-	float detect_dist = 1.f;
+	float detect_dist = .5f;
 	float sound_dist = 5.f;
+
+	glm::vec3 initial_player_stand;
 
 	Sound::PlayingSample *bomb_sound;
 

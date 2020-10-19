@@ -75,10 +75,12 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	player.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	player.camera->transform->rotation = glm::angleAxis(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	initial_player_stand = player.transform->position;
+
 	std::cout << "player at: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
 
 	bomb_sound = Sound::loop(*robin_sample, 0.0, 0.0).get();
@@ -87,10 +89,14 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 PlayMode::~PlayMode() {
 }
 
-float bomb_volume(Scene::Transform *b, Scene::Transform *p, float min_dist, float max_dist){
+float dist_between(Scene::Transform *b, Scene::Transform *p){
 	float xd = b->position.x - p->position.x, yd = b->position.y - p->position.y, zd = b->position.z - p->position.z;
 	float dist = std::sqrt(xd*xd + yd*yd + zd*zd);
-	std::cout << dist << "\n";
+	return dist;
+}
+
+float bomb_volume(Scene::Transform *b, Scene::Transform *p, float min_dist, float max_dist){
+	float dist = dist_between(b, p);
 	if (dist > max_dist)
 	{
 		return 0.f;
@@ -125,6 +131,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE)
+		{
+			dig.pressed = true;
+			return true;
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -139,7 +149,12 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.pressed = false;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE)
+		{
+			dig.pressed = false;
+			return true;
 		}
+		
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
 		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
 			SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -168,7 +183,36 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
+void PlayMode::restart(){
+	wait = -1.f;
+	player.transform->position = initial_player_stand;
+	player.at = walkmesh->nearest_walk_point(player.transform->position);
+
+	bomb_sound = Sound::loop(*robin_sample, 0.0, 0.0).get();
+}
+
 void PlayMode::update(float elapsed) {
+	if (wait >= wait_limit)
+	{
+		//game restarts
+		restart();
+		return;
+	}
+	
+	if (wait >= 0.f)
+	{
+		wait += elapsed;
+		return;
+	}
+	
+
+	if (dig.pressed && dist_between(player.transform, bomb) < detect_dist){
+		// find bomb
+		bomb_sound->set_volume(0.f);
+		wait = 0.f;
+		return;
+	}
+
 	//player walking:
 	{
 		//combine inputs into a move:
@@ -244,10 +288,6 @@ void PlayMode::update(float elapsed) {
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
 
-		std::cout << "player position: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
-		auto x = player.transform->position.x - bomb->position.x, y = player.transform->position.y - bomb->position.y, z = player.transform->position.z - bomb->position.z;
-		std::cout << "cur x, y, z: " << x << " " << y << " " << z << "\n";
-		std::cout << "cur distance: " << std::sqrt(x*x + y*y + z*z) << "\n";
 		bomb_sound->set_volume(bomb_volume(bomb, player.transform, detect_dist, sound_dist));
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
