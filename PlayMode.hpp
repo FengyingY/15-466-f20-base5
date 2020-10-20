@@ -33,8 +33,8 @@ struct PlayMode : Mode {
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
-	float detect_dist = 1.f;
-	float sound_dist = 5.f;
+	float detect_dist = 2.5f;
+	float sound_dist = 3.f;
 
 	glm::vec3 initial_player_stand;
 

@@ -17,15 +17,15 @@ EXPORT_SCENE=export-scene.py
 DIST=../dist
 
 all : \
-	$(DIST)/phone-bank.pnct \
-	$(DIST)/phone-bank.w \
-	$(DIST)/phone-bank.scene \
+	$(DIST)/house.pnct \
+	$(DIST)/house.w \
+	$(DIST)/house.scene \
 
-$(DIST)/phone-bank.pnct : phone-bank.blend $(EXPORT_MESHES)
+$(DIST)/house.pnct : house.blend $(EXPORT_MESHES)
 	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
 
-$(DIST)/phone-bank.scene : phone-bank.blend $(EXPORT_SCENE)
+$(DIST)/house.scene : house.blend $(EXPORT_SCENE)
 	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
 
-$(DIST)/phone-bank.w : phone-bank.blend $(EXPORT_WALKMESHES)
+$(DIST)/house.w : house.blend $(EXPORT_WALKMESHES)
 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'

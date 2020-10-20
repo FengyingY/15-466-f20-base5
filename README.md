@@ -1,8 +1,11 @@
-# (TODO: your game's title)
+# Food Maze
 
-Author: (TODO: your name)
+Author: Fengying Yang & Yunfei Cheng
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: 
+
+- Foods are distributed randomly in this building.
+- Your task is to collect all foods.
 
 Screen Shot:
 
@@ -10,14 +13,15 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+- W/A/S/D to walk in the room
+- SPACE to collect the ingredients
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+Sources: 
 
-This game was built with [NEST](NEST.md).
-
-- Loop003-jungle.wav by bebeto(https://freesound.org/people/bebeto/) from https://freesound.org/people/bebeto/sounds/18973/
+- [Loop003-jungle.wav](https://freesound.org/people/bebeto/sounds/18973/) by [bebeto](https://freesound.org/people/bebeto/)
 - cake, sandwich, pancake from `brunch.blend`
 - rail from `phone-bank.blend`
 - grass from `city.blend`
 - carrot, cabbage from `garden.blend`
+
+This game was built with [NEST](NEST.md).
