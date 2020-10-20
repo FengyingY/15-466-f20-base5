@@ -44,19 +44,29 @@ Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const
 	return ret;
 });
 
-Load< Sound::Sample > robin_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("robin.wav"));
+Load< Sound::Sample > background_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("Loop003-jungle.wav"));
 });
+
+std::string get_ingredients_entry(std::string ing, bool find){
+	std::string entry = "";
+	entry += ing;
+	entry += find? " got!" : " ?";
+	return entry;
+}
 
 PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//create a player transform:
 	for (auto& transform : scene.transforms)
 	{
-		if (transform.name == "Bomb")
+		if (std::strlen(transform.name.c_str()) > 6 && std::strncmp(transform.name.c_str(), "target", 6) == 0)
 		{
-			bomb = &transform;
-			std::cout <<"bomb: " << bomb->position.x << " " << bomb->position.y << " " << bomb->position.z << "\n";
-
+			remaining_target_count += 1;
+			target_vector.emplace_back();
+			Target* t = &target_vector.back();
+			t->transform = &transform;
+			t->name = transform.name.substr(7);
+			t->found = false;
 		}
 	}
 	
@@ -82,32 +92,13 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	initial_player_stand = player.transform->position;
 
 	std::cout << "player at: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
-
-	bomb_sound = Sound::loop(*robin_sample, 0.0, 0.0).get();
+	
+	Sound::loop(*background_sample, 1.0, 0.0);
 }
 
 PlayMode::~PlayMode() {
 }
 
-float dist_between(Scene::Transform *b, Scene::Transform *p){
-	float xd = b->position.x - p->position.x, yd = b->position.y - p->position.y, zd = b->position.z - p->position.z;
-	float dist = std::sqrt(xd*xd + yd*yd + zd*zd);
-	return dist;
-}
-
-float bomb_volume(Scene::Transform *b, Scene::Transform *p, float min_dist, float max_dist){
-	float dist = dist_between(b, p);
-	if (dist > max_dist)
-	{
-		return 0.f;
-	}
-	if (dist < min_dist)
-	{
-		return 1.f;
-	}
-
-	return 1.f - dist / max_dist;	
-}
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 
@@ -183,19 +174,19 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::restart(){
-	wait = -1.f;
-	player.transform->position = initial_player_stand;
-	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
-	bomb_sound = Sound::loop(*robin_sample, 0.0, 0.0).get();
+float dist_between(Scene::Transform *b, Scene::Transform *p){
+	float xd = b->position.x - p->position.x, yd = b->position.y - p->position.y, zd = b->position.z - p->position.z;
+	float dist = std::sqrt(xd*xd + yd*yd + zd*zd);
+	return dist;
 }
+
 
 void PlayMode::update(float elapsed) {
 	if (wait >= wait_limit)
 	{
-		//game restarts
-		restart();
+		//game exits
+		exit(0);
 		return;
 	}
 	
@@ -204,13 +195,31 @@ void PlayMode::update(float elapsed) {
 		wait += elapsed;
 		return;
 	}
-	
 
-	if (dig.pressed && dist_between(player.transform, bomb) < detect_dist){
-		// find bomb
-		bomb_sound->set_volume(0.f);
+	if (remaining_target_count == 0){
 		wait = 0.f;
+		game_ends = true;
 		return;
+	}
+	
+	if (dig.pressed)
+	{
+		for (auto t : target_vector)
+		{
+			if (t.found)
+			{
+				continue;
+			}
+			
+			float d = dist_between(player.transform, t.transform);
+			if (d <= detect_dist)
+			{
+				t.found = true;
+				remaining_target_count -= 1;
+				t.transform->scale = glm::vec3(0.f, 0.f, 0.f);
+				break;
+			}
+		}
 	}
 
 	//player walking:
@@ -288,7 +297,6 @@ void PlayMode::update(float elapsed) {
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
 
-		bomb_sound->set_volume(bomb_volume(bomb, player.transform, detect_dist, sound_dist));
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
 		glm::vec3 right = frame[0];
@@ -337,16 +345,56 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			0.0f, 0.0f, 0.0f, 1.0f
 		));
 
-		constexpr float H = 0.09f;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+		float H = 0.09f;
+		lines.draw_text("Press SPACE to collect ingredients from the world",
 			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
 		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+		lines.draw_text("Press SPACE to collect ingredients from the world",
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		
+		H = 0.2f;
+		if (game_ends)
+		{
+			lines.draw_text("You WIN! Congratulations!", 
+				glm::vec3(-0.5 * aspect + 0.1f * H, 0.1f * H, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+			lines.draw_text("You WIN! Congratulations!",
+				glm::vec3(-0.5 * aspect + 0.1f * H + ofs, 0.1f * H + ofs, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		}
+
+		H = 0.1f;
+		float menu_x = -aspect + 0.2f * H, menu_y = 1.0f - 1.2* H;
+		lines.draw_text("Menu: ", 
+			glm::vec3(menu_x, menu_y, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+		lines.draw_text("Menu: ", 
+			glm::vec3(menu_x + ofs, menu_y + ofs, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+
+		for (size_t i = 0; i < target_vector.size(); i++)
+		{
+			std::string ing_entry = get_ingredients_entry(target_vector[i].name, target_vector[i].found);
+			lines.draw_text(ing_entry, 
+				glm::vec3(menu_x, menu_y - (i+1) * H, 0.0),
+						glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+						glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+			lines.draw_text(ing_entry, 
+				glm::vec3(menu_x + ofs, menu_y - (i+1) * H + ofs, 0.0),
+						glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+						glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		}
+		
+
 	}
+	
 	GL_ERRORS();
 }

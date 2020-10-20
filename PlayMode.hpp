@@ -33,7 +33,6 @@ struct PlayMode : Mode {
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
-	Scene::Transform *bomb;
 	float detect_dist = .5f;
 	float sound_dist = 5.f;
 
@@ -49,4 +48,16 @@ struct PlayMode : Mode {
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
 	} player;
+
+	struct Target {
+		Scene::Transform *transform = nullptr;
+		bool found;
+		std::string name;
+	};
+
+	std::vector<Target> target_vector;
+	int remaining_target_count = 1; //  TODO initialize 0 
+
+	bool game_ends = false;
+
 };
