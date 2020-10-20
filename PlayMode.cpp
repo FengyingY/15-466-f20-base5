@@ -48,10 +48,10 @@ Load< Sound::Sample > background_sample(LoadTagDefault, []() -> Sound::Sample co
 	return new Sound::Sample(data_path("Loop003-jungle.wav"));
 });
 
-std::string get_ingredients_entry(std::string ing, bool find){
+std::string get_ingredients_entry(std::string ing, bool found){
 	std::string entry = "";
 	entry += ing;
-	entry += find? " got!" : " ?";
+	entry += found? " got!" : " ?";
 	return entry;
 }
 
@@ -59,7 +59,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//create a player transform:
 	for (auto& transform : scene.transforms)
 	{
-		if (std::strlen(transform.name.c_str()) > 6 && std::strncmp(transform.name.c_str(), "target", 6) == 0)
+		if (std::strlen(transform.name.c_str()) > 6 && std::strncmp(transform.name.c_str(), "Target", 6) == 0)
 		{
 			remaining_target_count += 1;
 			target_vector.emplace_back();
@@ -204,7 +204,7 @@ void PlayMode::update(float elapsed) {
 	
 	if (dig.pressed)
 	{
-		for (auto t : target_vector)
+		for (auto &t : target_vector)
 		{
 			if (t.found)
 			{
@@ -217,6 +217,7 @@ void PlayMode::update(float elapsed) {
 				t.found = true;
 				remaining_target_count -= 1;
 				t.transform->scale = glm::vec3(0.f, 0.f, 0.f);
+				dig.pressed = false;
 				break;
 			}
 		}
@@ -385,11 +386,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		{
 			std::string ing_entry = get_ingredients_entry(target_vector[i].name, target_vector[i].found);
 			lines.draw_text(ing_entry, 
-				glm::vec3(menu_x, menu_y - (i+1) * H, 0.0),
+				glm::vec3(menu_x, menu_y - (i+1) * 1.2f * H, 0.0),
 						glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 						glm::u8vec4(0x00, 0x00, 0x00, 0x00));
 			lines.draw_text(ing_entry, 
-				glm::vec3(menu_x + ofs, menu_y - (i+1) * H + ofs, 0.0),
+				glm::vec3(menu_x + ofs, menu_y - (i+1) * 1.2f * H + ofs, 0.0),
 						glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 						glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 		}
