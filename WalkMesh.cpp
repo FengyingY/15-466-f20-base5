@@ -144,7 +144,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		glm::vec3 start_pos = start.weights.x * a + start.weights.y * b + start.weights.z * c;
 		step_coords = barycentric_weights(a, b, c, start_pos + step);
 	}
-	
+
 	//if no edge is crossed, event will just be taking the whole step:
 	time = 1.0f;
 	end = start; // ?todo
@@ -153,6 +153,11 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	int zero_index = -1;
 	//figure out which edge (if any) is crossed first.
 	// set time and end appropriately.
+	
+	if (start.weights.z == 0 && barycentric_v.z < 0)
+	{
+		return;
+	}
 
 	double time_x = - start.weights.x / barycentric_v.x;
 	double time_y = - start.weights.y / barycentric_v.y;
@@ -202,7 +207,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	// {
 	// 	std::cout << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
 	// 	std::cout << "v: " << end.indices.x << " " << end.indices.y << " " << end.indices.z << "\n";
-	// 	std::cout << "walk in ended\n" ; 
+	// 	std::cout << zero_index << "walk in ended\n" ; 
 	// }
 	
 }
@@ -247,11 +252,13 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 			glm::cross(WalkMesh::normals[start.indices.y] - WalkMesh::normals[start.indices.x], WalkMesh::normals[start.indices.z] - WalkMesh::normals[start.indices.x]),
 			glm::cross(WalkMesh::normals[start.indices.x] - WalkMesh::normals[start.indices.y], WalkMesh::normals[v_it->second] - WalkMesh::normals[start.indices.y])
 		);
-
+		// std::cout << "cross\n";
+		// std::cout << "end weights: " << end.weights.x << " " << end.weights.y << " " << end.weights.z << "\n";
 		return true;
 	} else {
 		end = start;
 		rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+		// std::cout << "no next edge\n";
 		return false;
 	}
 }

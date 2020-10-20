@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("house.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("house.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -39,7 +39,7 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("house.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
@@ -92,7 +92,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	initial_player_stand = player.transform->position;
 
 	std::cout << "player at: " << player.transform->position.x << " " << player.transform->position.y << " " << player.transform->position.z << "\n";
-	
+	std::cout << "mesh " << player.at.weights.x << " " << player.at.weights.y << " " << player.at.weights.z << "\n";
 	Sound::loop(*background_sample, 1.0, 0.0);
 }
 
@@ -273,7 +273,8 @@ void PlayMode::update(float elapsed) {
 				float d = glm::dot(remain, in);
 				if (d < 0.0f) {
 					//bounce off of the wall:
-					remain += (-1.25f * d) * in;
+					remain += (-0.5f * d) * in;
+					std::cout << "off\n";
 				} else {
 					//if it's just pointing along the edge, bend slightly away from wall:
 					remain += 0.01f * d * in;
